@@ -198,8 +198,6 @@ namespace NotesApi.Controllers
         // Helper method to extract user ID from JWT token (you can customize this to your token)
         private int GetUserIdFromToken()
         {
-            //var userId = int.Parse(User.FindFirst("id")?.Value);  // Assuming the JWT has an 'id' claim
-            //return userId;
             var userIdClaim = User.FindFirst("id")?.Value;
 
             if (string.IsNullOrEmpty(userIdClaim))
@@ -214,12 +212,6 @@ namespace NotesApi.Controllers
 
             throw new ArgumentException("Invalid user ID in token");
         }
-    }
-
-    // DTO for sharing notes (you can define this as needed)
-    public class ShareRequest
-    {
-        public string SharedWithUser { get; set; }
     }
 }
 
