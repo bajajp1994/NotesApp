@@ -5,6 +5,8 @@ using NotesApi.Data;
 using System.Text;
 using AspNetCoreRateLimit;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +39,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 
     c.EnableAnnotations();
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Notes API", Version = "v1" });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -92,12 +95,33 @@ builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection(
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Get the dynamic port (default to 5000 for local testing)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://*:{port}");
+
+
+// Configure HTTP request pipeline securely
 if (app.Environment.IsDevelopment())
 {
+    // Enable Swagger only in development
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else if (app.Environment.IsProduction())
+{
+
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Notes API v1");
+        c.RoutePrefix = "swagger";
+    });
+
+
+}
+
+// Redirect root URL `/` to Swagger
+app.MapGet("/", [ApiExplorerSettings(IgnoreApi = true)] () => Results.Redirect("/swagger/index.html"));
 
 app.UseHttpsRedirection();
 // Use Rate Limiting Middleware
@@ -107,5 +131,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
 
 app.Run();
